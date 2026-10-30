@@ -20,6 +20,10 @@ __pycache__/
 *$py.class
 *.pkl.bak
 
+# Vercel Python build caches
+.vercel_python_packages/
+_uv/
+
 # Logs
 npm-debug.log*
 yarn-debug.log*
