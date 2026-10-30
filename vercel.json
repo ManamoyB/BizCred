@@ -1,6 +1,11 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
+  "functions": {
+    "api/index.py": {
+      "excludeFiles": "{**/tests/**,**/__tests__/**,**/*.test.py,**/test_*.py,**/fixtures/**,**/__fixtures__/**,**/testdata/**,**/sample-data/**,**/static/**,**/assets/**,api/*.pkl,.vercel/python/.venv/**}"
+    }
+  },
   "rewrites": [
     {
       "source": "/api/(.*)",

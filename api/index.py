@@ -1,8 +1,9 @@
+import json
+import math
 import os
 from typing import Any, Dict
 from fastapi import FastAPI, APIRouter, Request
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
 
 # Initialize FastAPI application
 app = FastAPI(title="BizCred API", description="AI-powered Business Credit Intelligence API")
@@ -16,24 +17,32 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Load model files using os.path.dirname(__file__)
+# Load compact model files using os.path.dirname(__file__)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(BASE_DIR, "lgbm_cibil_model.pkl")
-ENCODERS_PATH = os.path.join(BASE_DIR, "label_encoders_lgbm.pkl")
+MODEL_PATH = os.path.join(BASE_DIR, "lgbm_model_trees.json")
+ENCODERS_PATH = os.path.join(BASE_DIR, "label_encoder_classes.json")
 
-lgb_model = None
+model_trees = None
 label_encoders = None
 
 try:
-    import joblib
-    if os.path.exists(MODEL_PATH) and os.path.exists(ENCODERS_PATH):
-        lgb_model = joblib.load(MODEL_PATH)
-        label_encoders = joblib.load(ENCODERS_PATH)
-        print("Successfully loaded LightGBM model and encoders.")
-    else:
-        print(f"Model files not found in {BASE_DIR}")
-except Exception as e:
-    print(f"Warning: Could not load trained ML models ({e}). Using algorithmic fallback.")
+    with open(MODEL_PATH, "r", encoding="utf-8") as model_file:
+        model_data = json.load(model_file)
+    if model_data.get("objective") != "regression":
+        raise ValueError("The compact predictor only supports regression models.")
+    model_trees = model_data["trees"]
+
+    with open(ENCODERS_PATH, "r", encoding="utf-8") as encoders_file:
+        encoder_classes = json.load(encoders_file)
+    label_encoders = {
+        feature: {value: index for index, value in enumerate(classes)}
+        for feature, classes in encoder_classes.items()
+    }
+    if not model_trees:
+        raise ValueError("The compact model contains no trees.")
+    print("Successfully loaded compact LightGBM model data and encoders.")
+except Exception as error:
+    print(f"Warning: Could not load trained ML model data ({error}). Using algorithmic fallback.")
 
 # 30 Feature Names
 FEATURES = [
@@ -156,45 +165,47 @@ def compute_fallback_credit_score(user_data: Dict[str, Any]) -> float:
     return round(score, 2)
 
 
+def predict_tree(tree: list, feature_values: list[float]) -> float:
+    while len(tree) > 1:
+        feature_index, threshold, default_left, left_child, right_child = tree
+        value = feature_values[feature_index]
+        if math.isnan(value):
+            tree = left_child if default_left else right_child
+        else:
+            tree = left_child if value <= threshold else right_child
+    return tree[0]
+
+
 def run_prediction(user_input: Dict[str, Any]) -> float:
     """Preprocesses input and executes model inference or fallback."""
-    # Check if input is nested under 'data'
     if "data" in user_input and isinstance(user_input["data"], dict):
         user_input = user_input["data"]
 
-    # If ML model is loaded and pandas is available
-    if lgb_model is not None and label_encoders is not None:
+    if model_trees is not None and label_encoders is not None:
         try:
-            import pandas as pd
-            processed_input = {}
+            feature_values = []
             for feature in FEATURES:
-                val = user_input.get(feature, "")
-                if isinstance(val, str):
-                    if val.lower() in ["true", "yes"]:
-                        val = 1
-                    elif val.lower() in ["false", "no"]:
-                        val = 0
+                value = user_input.get(feature, "")
+                if isinstance(value, str):
+                    if value.lower() in ["true", "yes"]:
+                        value = 1
+                    elif value.lower() in ["false", "no"]:
+                        value = 0
                     elif feature in label_encoders:
-                        try:
-                            val = label_encoders[feature].transform([val])[0]
-                        except Exception:
-                            # Use first known class index or 0 if unseen category
-                            val = 0
+                        value = label_encoders[feature].get(value, 0)
                     else:
-                        try:
-                            val = float(val)
-                        except ValueError:
-                            pass
-                processed_input[feature] = val
+                        value = float(value)
+                elif value is None:
+                    value = float("nan")
+                else:
+                    value = float(value)
+                feature_values.append(value)
 
-            df = pd.DataFrame([processed_input])
-            predicted = float(lgb_model.predict(df)[0])
-            # Ensure within 300-900 bounds
+            predicted = sum(predict_tree(tree, feature_values) for tree in model_trees)
             return round(max(300.0, min(900.0, predicted)), 2)
-        except Exception as err:
-            print(f"ML inference error: {err}. Falling back to rule-based prediction.")
+        except Exception as error:
+            print(f"ML inference error: {error}. Falling back to rule-based prediction.")
 
-    # Algorithmic fallback
     return compute_fallback_credit_score(user_input)
 
 
