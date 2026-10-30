@@ -9,7 +9,7 @@ const Footer = () => {
      
 
       <div className="p-5 text-center bg-black">
-        Designed And Developed by Vidushi Vani and Team 💗
+        Designed and Developed by Manamoy Banerjee 💗
       </div>
     </footer>
   );

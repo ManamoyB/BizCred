@@ -284,7 +284,7 @@ BizCred/
 │   ├── deployment.md                   # Setup guide
 │   └── business-use-case.md           # Real-world applications
 │
-└── arpit-hack/                         # Hackathon project materials
+└── manamoy-hacks/                       # Hackathon project materials
 ```
 
 ---

@@ -1,0 +1,8 @@
+{
+  "name": "BizCred",
+  "description": "AI-powered Business Credit Intelligence & Risk Analytics Platform for SME creditworthiness assessment using alternative financial and compliance indicators.",
+  "permissions": [],
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

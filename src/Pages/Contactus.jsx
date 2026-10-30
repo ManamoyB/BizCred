@@ -1,8 +1,24 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Footer from "../Components/Footer/Fotter";
 import Header from "../Components/Header/Header";
 
 const ContactUs = () => {
+  const [submitted, setSubmitted] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    message: ''
+  });
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setSubmitted(true);
+  };
+
   return (
     <div className="min-h-screen bg-[#0f1632] relative overflow-hidden flex flex-col mt-12">
       {/* Starry Background */}
@@ -32,58 +48,92 @@ const ContactUs = () => {
             <h2 className="text-2xl md:text-3xl font-bold mb-6 text-center text-white">
               Contact Us
             </h2>
-            <form>
-              <div className="mb-4">
-                <label
-                  className="block text-white text-sm font-bold mb-2"
-                  htmlFor="name"
-                >
-                  Name
-                </label>
-                <input
-                  className="w-full px-3 py-2 rounded bg-transparent text-white border border-white/20 placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  id="name"
-                  type="text"
-                  placeholder="Your Name"
-                />
-              </div>
-              <div className="mb-4">
-                <label
-                  className="block text-white text-sm font-bold mb-2"
-                  htmlFor="email"
-                >
-                  Email
-                </label>
-                <input
-                  className="w-full px-3 py-2 rounded bg-transparent text-white border border-white/20 placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  id="email"
-                  type="email"
-                  placeholder="Your Email"
-                />
-              </div>
-              <div className="mb-6">
-                <label
-                  className="block text-white text-sm font-bold mb-2"
-                  htmlFor="message"
-                >
-                  Message
-                </label>
-                <textarea
-                  className="w-full px-3 py-2 rounded bg-transparent text-white border border-white/20 placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  id="message"
-                  placeholder="Your Message"
-                  rows="4"
-                ></textarea>
-              </div>
-              <div className="flex justify-center">
+            {submitted ? (
+              <div className="text-center py-6 text-white space-y-4">
+                <div className="w-12 h-12 bg-green-500/20 text-green-400 rounded-full flex items-center justify-center mx-auto text-2xl font-bold border border-green-500/40">
+                  ✓
+                </div>
+                <h3 className="text-xl font-bold">Message Sent!</h3>
+                <p className="text-sm text-white/80">
+                  Thank you for reaching out, {formData.name}. Our fintech advisory team will get back to you at {formData.email}.
+                </p>
                 <button
-                  className="bg-green-600 hover:bg-green-800 text-white font-bold py-2 px-4 rounded transition-all duration-300 w-full"
-                  type="submit"
+                  type="button"
+                  onClick={() => {
+                    setSubmitted(false);
+                    setFormData({ name: '', email: '', message: '' });
+                  }}
+                  className="mt-4 bg-white/20 hover:bg-white/30 text-white font-medium py-2 px-4 rounded transition-colors text-sm cursor-pointer"
                 >
-                  Send Message
+                  Send Another Message
                 </button>
               </div>
-            </form>
+            ) : (
+              <form onSubmit={handleSubmit}>
+                <div className="mb-4">
+                  <label
+                    className="block text-white text-sm font-bold mb-2"
+                    htmlFor="name"
+                  >
+                    Name
+                  </label>
+                  <input
+                    className="w-full px-3 py-2 rounded bg-transparent text-white border border-white/20 placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    id="name"
+                    name="name"
+                    type="text"
+                    value={formData.name}
+                    onChange={handleChange}
+                    placeholder="Your Name"
+                    required
+                  />
+                </div>
+                <div className="mb-4">
+                  <label
+                    className="block text-white text-sm font-bold mb-2"
+                    htmlFor="email"
+                  >
+                    Email
+                  </label>
+                  <input
+                    className="w-full px-3 py-2 rounded bg-transparent text-white border border-white/20 placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    id="email"
+                    name="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="Your Email"
+                    required
+                  />
+                </div>
+                <div className="mb-6">
+                  <label
+                    className="block text-white text-sm font-bold mb-2"
+                    htmlFor="message"
+                  >
+                    Message
+                  </label>
+                  <textarea
+                    className="w-full px-3 py-2 rounded bg-transparent text-white border border-white/20 placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    id="message"
+                    name="message"
+                    value={formData.message}
+                    onChange={handleChange}
+                    placeholder="Your Message"
+                    rows="4"
+                    required
+                  ></textarea>
+                </div>
+                <div className="flex justify-center">
+                  <button
+                    className="bg-green-600 hover:bg-green-800 text-white font-bold py-2 px-4 rounded transition-all duration-300 w-full cursor-pointer"
+                    type="submit"
+                  >
+                    Send Message
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
         <Footer />
